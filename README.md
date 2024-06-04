@@ -8,6 +8,7 @@ Running locally:
 ```bash
 docker run -p 3000:3000 --platform=linux/amd64 gorules/editor
 ```
+To create a local HTTPS certificate:
 
 Repository:
 https://hub.docker.com/r/gorules/editor
@@ -37,4 +38,15 @@ brew install mkcert
 
 mkcert --install
 cd cert && mkcert localhost
+```
+
+
+```
+docker build -t rule-engine:v0.0.1-beta .
+```
+```
+docker tag rule-engine:v0.0.1-beta 5.182.17.45:5002/rule-engine:v0.0.1-beta
+```
+```
+docker push 5.182.17.45:5002/rule-engine:v0.0.1-beta
 ```

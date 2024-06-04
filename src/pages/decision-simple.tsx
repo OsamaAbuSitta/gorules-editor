@@ -41,7 +41,7 @@ export const DecisionSimplePage: React.FC = () => {
     debugger;
     const filesResult = await axios.get('api/rules/files');
 
-    const menuFiles = filesResult.data.map((f) => {
+    const menuFiles = filesResult.data.map((f:any) => {
       const m: ItemType = {
         label: f,
         key: f,
@@ -237,7 +237,7 @@ export const DecisionSimplePage: React.FC = () => {
     }
   };
 
-  const getFileFromServer = async (fileName) => {
+  const getFileFromServer = async (fileName:any) => {
     try {
       const response = await axios.get(`/api/rules/files/${fileName}`);
       const fileData = response.data;
