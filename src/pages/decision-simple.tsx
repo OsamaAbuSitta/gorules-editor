@@ -15,6 +15,8 @@ import { match, P } from 'ts-pattern';
 import classes from './decision-simple.module.css';
 import axios from 'axios';
 import { ThemePreference, useTheme } from '../context/theme.provider.tsx';
+import { ItemType } from 'antd/es/menu/hooks/useItems';
+import { join } from 'path';
 
 enum DocumentFileTypes {
   Decision = 'application/vnd.gorules.decision',
@@ -33,6 +35,52 @@ export const DecisionSimplePage: React.FC = () => {
   const [graph, setGraph] = useState<DecisionContent>({ nodes: [], edges: [] });
   const [fileName, setFileName] = useState('Untitled Decision');
   const [graphTrace, setGraphTrace] = useState<Simulation>();
+  const [menu, setMenu] = useState<{ items: ItemType[] }>();
+
+  const getRulesFiles = async () => {
+    debugger;
+    const filesResult = await axios.get('api/rules/files');
+
+    const menuFiles = filesResult.data.map((f) => {
+      const m: ItemType = {
+        label: f,
+        key: f,
+      };
+      return m;
+    });
+
+    setMenu({
+      items: [...[
+        {
+          label: 'File system',
+          key: 'file-system',
+        },
+        {
+          type: 'divider',
+        },
+        {
+          label: 'Fintech: Company analysis',
+          key: 'company-analysis',
+        },
+        {
+          label: 'Fintech: AML',
+          key: 'aml',
+        },
+        {
+          label: 'Retail: Shipping fees',
+          key: 'shipping-fees',
+        },
+        {
+          type: 'divider',
+        },
+        ,
+      ],...menuFiles],
+    });
+  };
+
+  useEffect(() => {
+    getRulesFiles();
+  }, []);
 
   useEffect(() => {
     const templateParam = searchParams.get('template');
@@ -105,26 +153,52 @@ export const DecisionSimplePage: React.FC = () => {
   };
 
   const saveFile = async () => {
-    if (!supportFSApi) {
-      message.error('Unsupported file system API');
-      return;
-    }
+    // if (!supportFSApi) {
+    //   return await handleDownload();
+    // }
 
-    if (fileHandle) {
-      let writable: FileSystemWritableFileStream | undefined = undefined;
+    let writable: FileSystemWritableFileStream | undefined = undefined;
+    try {
+      checkCyclic();
+      const json = JSON.stringify({ contentType: DocumentFileTypes.Decision, ...graph }, null, 2);
+      const newFileName = `${fileName.replaceAll('.json', '')}.json`;
+      const handle = await window.showSaveFilePicker({
+        types: [{ description: newFileName, accept: { 'application/json': ['.json'] } }],
+      });
+
+      writable = await handle.createWritable();
+      await writable.write(json);
+      setFileHandle(handle);
+      const file = await handle.getFile();
+      setFileName(file.name);
+      message.success('File saved');
+    } catch (e) {
+      displayError(e);
+    } finally {
+      writable?.close?.();
+    }
+  };
+
+
+  const saveFileToServer = async () => {
+    debugger;
+   
       try {
-        writable = await fileHandle.createWritable();
+       
         checkCyclic();
 
         const json = JSON.stringify({ contentType: DocumentFileTypes.Decision, ...graph }, null, 2);
-        await writable.write(json);
+        const newFileName = `${fileName.replaceAll('.json', '')}.json`;
+
+        const postResult = await axios.post('api/rules/files', {name:newFileName , json:json});
+        //const result = postResult?.data:
+        
         message.success('File saved');
+         
+        await getRulesFiles();
       } catch (e) {
         displayError(e);
-      } finally {
-        writable?.close?.();
       }
-    }
   };
 
   const handleNew = async () => {
@@ -147,6 +221,7 @@ export const DecisionSimplePage: React.FC = () => {
         openFile();
         break;
       default: {
+        debugger;
         if (Object.hasOwn(decisionTemplates, e.key)) {
           Modal.confirm({
             title: 'Open example',
@@ -155,8 +230,22 @@ export const DecisionSimplePage: React.FC = () => {
             onOk: async () => loadTemplateGraph(e.key),
           });
         }
+
+        await getFileFromServer(e.key);
         break;
       }
+    }
+  };
+
+  const getFileFromServer = async (fileName) => {
+    try {
+      const response = await axios.get(`/api/rules/files/${fileName}`);
+      const fileData = response.data;
+      setGraph(JSON.parse(fileData.content));
+      setFileName(fileData.name);
+      message.success('File retrieved successfully');
+    } catch (error) {
+      displayError(error);
     }
   };
 
@@ -279,27 +368,7 @@ export const DecisionSimplePage: React.FC = () => {
                   <Dropdown
                     menu={{
                       onClick: handleOpenMenu,
-                      items: [
-                        {
-                          label: 'File system',
-                          key: 'file-system',
-                        },
-                        {
-                          type: 'divider',
-                        },
-                        {
-                          label: 'Fintech: Company analysis',
-                          key: 'company-analysis',
-                        },
-                        {
-                          label: 'Fintech: AML',
-                          key: 'aml',
-                        },
-                        {
-                          label: 'Retail: Shipping fees',
-                          key: 'shipping-fees',
-                        },
-                      ],
+                      items: menu?.items,
                     }}
                   >
                     <Button type={'text'} size={'small'}>
@@ -307,13 +376,16 @@ export const DecisionSimplePage: React.FC = () => {
                     </Button>
                   </Dropdown>
                   {supportFSApi && (
-                    <Button onClick={saveFile} type={'text'} size={'small'}>
-                      Save
+                    <Button onClick={saveFileToServer} type={'text'} size={'small'}>
+                      Save to server
                     </Button>
                   )}
                   <Button onClick={saveFileAs} type={'text'} size={'small'}>
-                    Save as
+                    Save as file
                   </Button>
+                  {/* <Button onClick={saveFileToServer} type={'text'} size={'small'}>
+                    Save to server
+                  </Button> */}
                 </Stack>
               </div>
             </div>

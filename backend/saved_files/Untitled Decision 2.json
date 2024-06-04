@@ -1,0 +1,65 @@
+{
+  "contentType": "application/vnd.gorules.decision",
+  "nodes": [
+    {
+      "id": "be83b02e-6757-4c0b-a28e-01cd1a38c968",
+      "type": "inputNode",
+      "position": {
+        "x": 65,
+        "y": 140
+      },
+      "name": "request"
+    },
+    {
+      "id": "d6c75aa6-5129-4d7c-a133-cb55be8f375e",
+      "type": "decisionTableNode",
+      "position": {
+        "x": 450,
+        "y": 5
+      },
+      "name": "decisionTable1",
+      "content": {
+        "hitPolicy": "first",
+        "inputs": [
+          {
+            "id": "4f71e97c-b1fb-4c29-a7da-0f30808ca56c",
+            "name": "Input",
+            "type": "expression"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "b5eb1b9f-0b7b-4082-80be-770dc07f2a0b",
+            "field": "output",
+            "name": "Output",
+            "type": "expression"
+          }
+        ],
+        "rules": []
+      }
+    },
+    {
+      "id": "9fede045-568b-4556-a4ee-e1c1a4f68868",
+      "type": "outputNode",
+      "position": {
+        "x": 795,
+        "y": 150
+      },
+      "name": "response"
+    }
+  ],
+  "edges": [
+    {
+      "id": "94f50271-1a6f-4e94-86f8-e3a4cf008134",
+      "sourceId": "be83b02e-6757-4c0b-a28e-01cd1a38c968",
+      "type": "edge",
+      "targetId": "d6c75aa6-5129-4d7c-a133-cb55be8f375e"
+    },
+    {
+      "id": "f1d32d6c-0b39-4c4d-b973-6aad342795bc",
+      "sourceId": "d6c75aa6-5129-4d7c-a133-cb55be8f375e",
+      "type": "edge",
+      "targetId": "9fede045-568b-4556-a4ee-e1c1a4f68868"
+    }
+  ]
+}

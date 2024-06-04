@@ -1,11 +1,9 @@
 use std::env;
 use std::path::Path;
-
 use axum::extract::DefaultBodyLimit;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
-use axum::routing::{get, post};
-use axum::{Json, Router};
+use axum::{extract::Path as AxumPath, routing::{get, post}, Json, Router};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tokio::runtime::Handle;
@@ -18,6 +16,19 @@ use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 use zen_engine::model::DecisionContent;
 use zen_engine::{DecisionEngine, DecisionGraphResponse, EvaluationError, EvaluationOptions};
+use postgres::{Client , NoTls};
+use postgres::Error as postgresError;
+use std::fs::File;
+use std::io::Write;
+use std::fs;
+
+
+#[macro_use]
+extern crate serde_json;
+
+
+//Model 
+
 
 const IS_DEVELOPMENT: bool = cfg!(debug_assertions);
 
@@ -39,7 +50,11 @@ async fn main() {
         .route(
             "/api/simulate",
             post(simulate).layer(DefaultBodyLimit::max(16 * 1024 * 1024)),
-        )
+        ).route(
+            "/api/rules/files",
+            get(list_files).layer(DefaultBodyLimit::max(16 * 1024 * 1024)).post(save_rule_json),
+        ) .route("/api/rules/files/:name", get(get_file_by_name))
+        .route("/api/evaluate", post(evaluate_file))
         .nest_service("/", serve_dir_service());
 
     let listener = tokio::net::TcpListener::bind(listener_address)
@@ -79,6 +94,13 @@ struct SimulateRequest {
     content: DecisionContent,
 }
 
+#[derive(Deserialize, Serialize)]
+struct FileEvaluationRequest {
+    context: Value,
+    file_name: String,
+}
+
+
 async fn simulate(
     Json(payload): Json<SimulateRequest>,
 ) -> Result<Json<DecisionGraphResponse>, SimulateError> {
@@ -99,6 +121,7 @@ async fn simulate(
     return Ok(Json(result));
 }
 
+
 struct SimulateError(Box<EvaluationError>);
 
 impl IntoResponse for SimulateError {
@@ -116,3 +139,119 @@ impl From<Box<EvaluationError>> for SimulateError {
         Self(value)
     }
 }
+
+
+/* =============================================================================================== */
+#[derive(Deserialize, Serialize)]
+struct SaveRuleRequest {
+    name: String , 
+    json: String , 
+}
+
+async fn save_rule_json(Json(payload): Json<SaveRuleRequest>)-> impl IntoResponse 
+{
+    let SaveRuleRequest {name, json } = payload;
+
+    let file_path = Path::new("saved_files").join(name);
+
+    if let Some(parent) = file_path.parent() {
+        std::fs::create_dir_all(parent).unwrap();
+    }
+
+    match File::create(&file_path) {
+        Ok(mut file) => match file.write_all(json.as_bytes()) {
+            Ok(_) => (StatusCode::OK, "File saved successfully").into_response(),
+            Err(err) => {
+                eprintln!("Failed to write to file: {}", err);
+                (StatusCode::INTERNAL_SERVER_ERROR, "Failed to save file").into_response()
+            }
+        },
+        Err(err) => {
+            eprintln!("Failed to create file: {}", err);
+            (StatusCode::INTERNAL_SERVER_ERROR, "Failed to save file").into_response()
+        }
+    }
+}
+
+#[derive(Deserialize, Serialize)]
+struct FileContentResponse {
+    name: String,
+    content: String,
+}
+
+async fn get_file_by_name(AxumPath(name): AxumPath<String>) -> impl IntoResponse {
+    let file_path = Path::new("saved_files").join(&name);
+
+    match fs::read_to_string(&file_path) {
+        Ok(content) => {
+            let response = FileContentResponse {
+                name: name.clone(),
+                content,
+            };
+            Json(response).into_response()
+        }
+        Err(err) => {
+            eprintln!("Failed to read file {}: {}", name, err);
+            (StatusCode::NOT_FOUND, "File not found").into_response()
+        }
+    }
+}
+
+async fn list_files() -> impl IntoResponse {
+    let files_dir = Path::new("saved_files");
+
+    // Create the directory if it doesn't exist
+    if !files_dir.exists() {
+        std::fs::create_dir_all(files_dir).unwrap();
+    }
+
+    match fs::read_dir(files_dir) {
+        Ok(entries) => {
+            let file_names: Vec<String> = entries
+                .filter_map(|entry| entry.ok())
+                .filter_map(|entry| entry.path().file_name().map(|name| name.to_string_lossy().into_owned()))
+                .collect();
+
+            Json(file_names).into_response()
+        }
+        Err(err) => {
+            eprintln!("Failed to read directory: {}", err);
+            (StatusCode::INTERNAL_SERVER_ERROR, "Failed to list files").into_response()
+        }
+    }
+}
+
+
+/* =============================================================================================== */
+async fn evaluate_file(Json(payload): Json<FileEvaluationRequest>) -> impl IntoResponse {
+    let file_path = Path::new("saved_files").join(&payload.file_name);
+
+    match fs::read_to_string(&file_path) {
+        Ok(file_content) => {
+            let decision_content: DecisionContent = serde_json::from_str(&file_content).expect("Can't read rule file");
+
+            let engine = DecisionEngine::default();
+            let decision = engine.create_decision(decision_content.into());
+            let result = tokio::task::spawn_blocking(move || {
+                Handle::current().block_on(decision.evaluate_with_opts(
+                    &payload.context,
+                    EvaluationOptions {
+                        trace: Some(true),
+                        max_depth: None,
+                    },
+                ))
+            })
+            .await
+            .unwrap();
+
+            Json(result).into_response()
+            //Ok(Json(result))
+        }
+        Err(err) => {
+            eprintln!("Failed to read file {}: {}", payload.file_name, err);
+            (StatusCode::INTERNAL_SERVER_ERROR, "Failed to save file").into_response()
+        }
+    }
+}
+
+

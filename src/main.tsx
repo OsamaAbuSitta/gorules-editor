@@ -18,11 +18,16 @@ import 'ace-builds/src-noconflict/theme-chrome';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { DecisionSimplePage } from './pages/decision-simple.tsx';
 import { NotFoundPage } from './pages/not-found';
+import { Storage } from './pages/storage';
 import { ThemeContextProvider } from './context/theme.provider.tsx';
 
 const router = createBrowserRouter([
   {
     path: '/',
+    element: <Storage />,
+  },
+  {
+    path: '/editor',
     element: <DecisionSimplePage />,
   },
   {
