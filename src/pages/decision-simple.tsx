@@ -237,7 +237,7 @@ export const DecisionSimplePage: React.FC = () => {
     }
   };
 
-  const getFileFromServer = async (fileName:any) => {
+  const getFileFromServer = async (fileName) => {
     try {
       const response = await axios.get(`/api/rules/files/${fileName}`);
       const fileData = response.data;
@@ -375,7 +375,7 @@ export const DecisionSimplePage: React.FC = () => {
                       Open
                     </Button>
                   </Dropdown>
-                  {supportFSApi && (
+                  {true && (
                     <Button onClick={saveFileToServer} type={'text'} size={'small'}>
                       Save to server
                     </Button>
