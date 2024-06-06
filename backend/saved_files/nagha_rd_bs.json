@@ -1,0 +1,145 @@
+{
+  "contentType": "application/vnd.gorules.decision",
+  "nodes": [
+    {
+      "id": "68066318-b73e-4193-9104-e61673effc57",
+      "type": "inputNode",
+      "position": {
+        "x": 30,
+        "y": 145
+      },
+      "name": "request"
+    },
+    {
+      "id": "a4712244-3ed5-49c8-ab4e-b5fac30be6ef",
+      "type": "outputNode",
+      "position": {
+        "x": 1160,
+        "y": 145
+      },
+      "name": "response"
+    },
+    {
+      "id": "97c4ddf4-5c06-43a6-9338-23f2a174409e",
+      "type": "decisionTableNode",
+      "position": {
+        "x": 475,
+        "y": 15
+      },
+      "name": "decisionTable1",
+      "content": {
+        "hitPolicy": "first",
+        "inputs": [
+          {
+            "id": "5926d15e-4c99-47a8-870e-15447f02e683",
+            "type": "expression",
+            "field": "encounterType",
+            "name": "Encounter Type"
+          },
+          {
+            "id": "190d0cee-68e5-43ca-94f4-9c962cd89933",
+            "type": "expression",
+            "field": "patientCoverage",
+            "name": "Patient Coverage"
+          },
+          {
+            "id": "552412ba-bf00-429f-84b0-125a3d146a01",
+            "type": "expression",
+            "field": "patientAge",
+            "name": "Patient Age"
+          },
+          {
+            "id": "3df54c60-fe3a-4391-9387-adebffda9d81",
+            "type": "expression",
+            "field": "practitionerSpecialty",
+            "name": "Practitioner Specialty"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "ed19e8d1-1738-419c-9cb1-ab3f6e614451",
+            "field": "hospitalCode",
+            "name": "Hospital Code",
+            "type": "expression"
+          },
+          {
+            "id": "42bdaec3-8702-40de-a978-6bf864bf05e8",
+            "type": "expression",
+            "field": "covered",
+            "name": "Covered"
+          }
+        ],
+        "rules": [
+          {
+            "_id": "bc8c3c28-5024-4926-8315-78eea412459a",
+            "5926d15e-4c99-47a8-870e-15447f02e683": "\"OP\"",
+            "190d0cee-68e5-43ca-94f4-9c962cd89933": "\"Insured\"",
+            "552412ba-bf00-429f-84b0-125a3d146a01": "",
+            "3df54c60-fe3a-4391-9387-adebffda9d81": "",
+            "ed19e8d1-1738-419c-9cb1-ab3f6e614451": "\"836000020\"",
+            "42bdaec3-8702-40de-a978-6bf864bf05e8": "\"Insured\""
+          },
+          {
+            "_id": "74a3b387-a7a0-4efb-a529-a0361f220244",
+            "5926d15e-4c99-47a8-870e-15447f02e683": "\"OP\"",
+            "190d0cee-68e5-43ca-94f4-9c962cd89933": "\"Direct\"",
+            "552412ba-bf00-429f-84b0-125a3d146a01": "<= 18",
+            "3df54c60-fe3a-4391-9387-adebffda9d81": "",
+            "ed19e8d1-1738-419c-9cb1-ab3f6e614451": "\"836000360\"",
+            "42bdaec3-8702-40de-a978-6bf864bf05e8": "\"Uninsured\""
+          },
+          {
+            "_id": "f90d9459-4dc0-4f72-879e-401e78c25d83",
+            "5926d15e-4c99-47a8-870e-15447f02e683": "\"OP\"",
+            "190d0cee-68e5-43ca-94f4-9c962cd89933": "\"Direct\"",
+            "552412ba-bf00-429f-84b0-125a3d146a01": "> 18",
+            "3df54c60-fe3a-4391-9387-adebffda9d81": "",
+            "ed19e8d1-1738-419c-9cb1-ab3f6e614451": "\"836000050\"",
+            "42bdaec3-8702-40de-a978-6bf864bf05e8": "\"Uninsured\""
+          },
+          {
+            "_id": "20a7fb4e-5221-4305-9e5e-d48d5f41f561",
+            "5926d15e-4c99-47a8-870e-15447f02e683": "\"IP\"",
+            "190d0cee-68e5-43ca-94f4-9c962cd89933": "\"Insured\"",
+            "552412ba-bf00-429f-84b0-125a3d146a01": "",
+            "3df54c60-fe3a-4391-9387-adebffda9d81": "\"S\"",
+            "ed19e8d1-1738-419c-9cb1-ab3f6e614451": "\"936000050\"",
+            "42bdaec3-8702-40de-a978-6bf864bf05e8": "\"Insured\""
+          },
+          {
+            "_id": "8a866e5d-aa3d-46a7-a4ea-8655659b9c29",
+            "5926d15e-4c99-47a8-870e-15447f02e683": "\"IP\"",
+            "190d0cee-68e5-43ca-94f4-9c962cd89933": "\"Direct\"",
+            "552412ba-bf00-429f-84b0-125a3d146a01": "< 20",
+            "3df54c60-fe3a-4391-9387-adebffda9d81": "",
+            "ed19e8d1-1738-419c-9cb1-ab3f6e614451": "\"936000060\"",
+            "42bdaec3-8702-40de-a978-6bf864bf05e8": "\"Uninsured\""
+          },
+          {
+            "_id": "87043d9c-e7db-482f-b323-89f76aca9c08",
+            "5926d15e-4c99-47a8-870e-15447f02e683": "",
+            "190d0cee-68e5-43ca-94f4-9c962cd89933": "",
+            "552412ba-bf00-429f-84b0-125a3d146a01": "",
+            "3df54c60-fe3a-4391-9387-adebffda9d81": "",
+            "ed19e8d1-1738-419c-9cb1-ab3f6e614451": "\"Unknown\"",
+            "42bdaec3-8702-40de-a978-6bf864bf05e8": "\"Unknown\""
+          }
+        ]
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "efac01b7-7b0a-4cbd-bfee-22922703a027",
+      "sourceId": "68066318-b73e-4193-9104-e61673effc57",
+      "type": "edge",
+      "targetId": "97c4ddf4-5c06-43a6-9338-23f2a174409e"
+    },
+    {
+      "id": "6190d7fa-d113-4274-a0b7-04ef4486e796",
+      "sourceId": "97c4ddf4-5c06-43a6-9338-23f2a174409e",
+      "type": "edge",
+      "targetId": "a4712244-3ed5-49c8-ab4e-b5fac30be6ef"
+    }
+  ]
+}

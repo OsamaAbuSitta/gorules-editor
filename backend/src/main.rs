@@ -236,7 +236,7 @@ async fn evaluate_file(Json(payload): Json<FileEvaluationRequest>) -> impl IntoR
                 Handle::current().block_on(decision.evaluate_with_opts(
                     &payload.context,
                     EvaluationOptions {
-                        trace: Some(true),
+                        trace: Some(false),
                         max_depth: None,
                     },
                 ))
